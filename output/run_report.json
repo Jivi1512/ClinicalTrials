@@ -1,0 +1,32 @@
+{
+  "pipeline_run_id": "4ee79ccc-3f92-4be4-bb52-6f244a29faf0",
+  "extraction_date": "2026-05-27",
+  "total_rows": 0,
+  "distinct_pairs": 0,
+  "duplicate_rate": 0.0,
+  "null_rates": {
+    "nct_id": 0.0,
+    "drug_name_norm": 0.0,
+    "condition": 0.0,
+    "phase": 0.0,
+    "target_primary": 0.0
+  },
+  "threshold_breaches": [],
+  "target_source_distribution": {
+    "drugbank": 0,
+    "chembl": 0,
+    "drugbank+chembl": 0,
+    "mesh": 0,
+    "nlp": 0,
+    "none": 0
+  },
+  "phase_distribution": {},
+  "status_distribution": {},
+  "api_pages_fetched": 0,
+  "total_count_expected": 0,
+  "coverage_rate": 0.0,
+  "spot_check_pass_rate": 0.0,
+  "spot_check_failures": [],
+  "validation_warnings_count": 0,
+  "runtime_seconds": 0.75
+}

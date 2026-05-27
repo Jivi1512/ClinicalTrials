@@ -1,0 +1,229 @@
+2026-05-27 19:22:51,077 [INFO] Pipeline started: run_id=bc2f2983-eebe-4e47-b362-3ea7576b19c4
+2026-05-27 19:22:51,077 [INFO] Loading lookup dictionaries...
+2026-05-27 19:22:51,077 [INFO] Loading DrugBank lookup...
+2026-05-27 19:22:51,079 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:22:51,079 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:22:51,080 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:22:51,080 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:22:51,080 [INFO] Spawning 3 worker processes
+2026-05-27 19:22:51,096 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:22:51,554 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:22:53,876 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:22:58,192 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:22:58,192 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:22:58,192 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:22:58,192 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:22:58,192 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:22:58,192 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:22:58,192 [INFO] M5 complete: 0 rows written
+2026-05-27 19:22:58,192 [INFO] M6: running spot checks...
+2026-05-27 19:22:58,192 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:22:58,192 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:22:58,192 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:22:58,192 [INFO] Pipeline complete in 7.1s. Exit code: 2
+2026-05-27 19:23:41,112 [INFO] Pipeline started: run_id=4749f2af-a24d-4e45-8d50-b24116720a40
+2026-05-27 19:23:41,112 [INFO] Loading lookup dictionaries...
+2026-05-27 19:23:41,112 [INFO] Loading DrugBank lookup...
+2026-05-27 19:23:41,112 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:23:41,112 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:23:41,112 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:23:41,112 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:23:41,112 [INFO] Spawning 3 worker processes
+2026-05-27 19:23:41,120 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:23:41,534 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:23:43,856 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:23:48,173 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:23:48,173 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:23:48,173 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:23:48,180 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:23:48,180 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:23:48,180 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:23:48,180 [INFO] M5 complete: 0 rows written
+2026-05-27 19:23:48,183 [INFO] M6: running spot checks...
+2026-05-27 19:23:48,183 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:23:48,185 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:23:48,187 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:23:48,188 [INFO] Pipeline complete in 7.1s. Exit code: 2
+2026-05-27 19:27:58,790 [INFO] Pipeline started: run_id=8960229a-2a5c-419b-9902-9bcd0a2600a1
+2026-05-27 19:27:58,790 [INFO] Loading lookup dictionaries...
+2026-05-27 19:27:58,790 [INFO] Loading DrugBank lookup...
+2026-05-27 19:27:58,790 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:27:58,790 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:27:58,790 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:27:58,790 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:27:58,790 [INFO] Spawning 3 worker processes
+2026-05-27 19:27:58,790 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:27:59,202 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:28:01,526 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:28:05,846 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:28:05,846 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:28:05,846 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:28:05,846 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:28:05,846 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:28:05,846 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:28:05,846 [INFO] M5 complete: 0 rows written
+2026-05-27 19:28:05,846 [INFO] M6: running spot checks...
+2026-05-27 19:28:05,856 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:28:05,859 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:28:05,860 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:28:05,864 [INFO] Pipeline complete in 7.0s. Exit code: 2
+2026-05-27 19:28:19,695 [INFO] Pipeline started: run_id=fafd5eb8-49cd-4140-8edc-9b92e0ba9546
+2026-05-27 19:28:19,695 [INFO] Loading lookup dictionaries...
+2026-05-27 19:28:19,695 [INFO] Loading DrugBank lookup...
+2026-05-27 19:28:19,696 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:28:19,697 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:28:19,697 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:28:19,698 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:28:19,698 [INFO] Spawning 3 worker processes
+2026-05-27 19:28:19,702 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:28:20,155 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:28:22,478 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:28:26,782 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:28:26,782 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:28:26,782 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:28:26,782 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:28:26,782 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:28:26,782 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:28:26,782 [INFO] M5 complete: 0 rows written
+2026-05-27 19:28:26,782 [INFO] M6: running spot checks...
+2026-05-27 19:28:26,782 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:28:26,782 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:28:26,782 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:28:26,782 [INFO] Pipeline complete in 7.1s. Exit code: 2
+2026-05-27 19:30:56,524 [INFO] Pipeline started: run_id=c4aea3ec-c38a-4cec-852e-1797bfb49063
+2026-05-27 19:30:56,524 [INFO] Loading lookup dictionaries...
+2026-05-27 19:30:56,524 [INFO] Loading DrugBank lookup...
+2026-05-27 19:30:56,524 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:30:56,524 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:30:56,524 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:30:56,524 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:30:56,524 [INFO] Spawning 3 worker processes
+2026-05-27 19:30:56,543 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:30:56,942 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:30:59,264 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:31:03,584 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.term=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:31:03,584 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:31:03,584 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:31:03,584 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:31:03,584 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:31:03,584 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:31:03,584 [INFO] M5 complete: 0 rows written
+2026-05-27 19:31:03,584 [INFO] M6: running spot checks...
+2026-05-27 19:31:03,584 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:31:03,584 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:31:03,584 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:31:03,589 [INFO] Pipeline complete in 7.1s. Exit code: 2
+2026-05-27 19:32:57,282 [INFO] Pipeline started: run_id=e9a4fc94-eedf-40d5-aa12-25c6ca4d3c8f
+2026-05-27 19:32:57,282 [INFO] Loading lookup dictionaries...
+2026-05-27 19:32:57,282 [INFO] Loading DrugBank lookup...
+2026-05-27 19:32:57,282 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:32:57,282 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:32:57,282 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:32:57,282 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:32:57,282 [INFO] Spawning 3 worker processes
+2026-05-27 19:32:57,282 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:32:57,685 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&filter.advanced=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:32:59,996 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&filter.advanced=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:33:04,339 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&filter.advanced=AREA%5BInterventionType%5DDRUG+OR+AREA%5BInterventionType%5DBIOLOGICAL+OR+AREA%5BInterventionType%5DCOMBINATION_PRODUCT+OR+AREA%5BInterventionType%5DDIETARY_SUPPLEMENT&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:33:04,341 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:33:04,341 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:33:04,343 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:33:04,343 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:33:04,343 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:33:04,343 [INFO] M5 complete: 0 rows written
+2026-05-27 19:33:04,343 [INFO] M6: running spot checks...
+2026-05-27 19:33:04,343 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:33:04,343 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:33:04,343 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:33:04,343 [INFO] Pipeline complete in 7.1s. Exit code: 2
+2026-05-27 19:38:16,954 [INFO] Pipeline started: run_id=6a3254e1-2392-4a36-9f06-f26ce54d9995
+2026-05-27 19:38:16,954 [INFO] Loading lookup dictionaries...
+2026-05-27 19:38:16,954 [INFO] Loading DrugBank lookup...
+2026-05-27 19:38:16,954 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:38:16,954 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:38:16,954 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:38:16,954 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:38:16,954 [INFO] Spawning 3 worker processes
+2026-05-27 19:38:16,954 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:38:17,356 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&filter.studyType=INTERVENTIONAL&countTotal=true&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:38:19,678 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&filter.studyType=INTERVENTIONAL&countTotal=true&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:38:23,988 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&filter.studyType=INTERVENTIONAL&countTotal=true&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:38:23,990 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:38:23,990 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:38:23,991 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:38:23,992 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:38:23,992 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:38:23,993 [INFO] M5 complete: 0 rows written
+2026-05-27 19:38:23,993 [INFO] M6: running spot checks...
+2026-05-27 19:38:23,993 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:38:23,993 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:38:23,993 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:38:23,995 [INFO] Pipeline complete in 7.0s. Exit code: 2
+2026-05-27 19:44:17,912 [INFO] Pipeline started: run_id=e0983788-c25b-4f69-b88f-64a1d193d58c
+2026-05-27 19:44:17,912 [INFO] Loading lookup dictionaries...
+2026-05-27 19:44:17,912 [INFO] Loading DrugBank lookup...
+2026-05-27 19:44:17,913 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:44:17,913 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:44:17,914 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:44:17,914 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:44:17,914 [INFO] Spawning 3 worker processes
+2026-05-27 19:44:17,916 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:44:18,311 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.intr=drug&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:44:20,633 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.intr=drug&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:44:24,956 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&query.intr=drug&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW')
+2026-05-27 19:44:24,957 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:44:24,957 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:44:24,958 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:44:24,959 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:44:24,959 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:44:24,959 [INFO] M5 complete: 0 rows written
+2026-05-27 19:44:24,962 [INFO] M6: running spot checks...
+2026-05-27 19:44:24,963 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:44:24,965 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:44:24,966 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:44:24,966 [INFO] Pipeline complete in 7.1s. Exit code: 2
+2026-05-27 19:51:20,468 [INFO] Pipeline started: run_id=774b6367-985d-4975-8306-4461f9c19fcd
+2026-05-27 19:51:20,468 [INFO] Loading lookup dictionaries...
+2026-05-27 19:51:20,468 [INFO] Loading DrugBank lookup...
+2026-05-27 19:51:20,468 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:51:20,468 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:51:20,468 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:51:20,468 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:51:20,468 [INFO] Spawning 3 worker processes
+2026-05-27 19:51:20,468 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:51:20,867 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 1: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW&aggFilters=interventionType:drug+bio+combo+dietary&fields=nctId,briefTitle,overallStatus,phases,conditions,interventions,briefSummary,detailedDescription,conditionMeshTerms,interventionMeshTerms,leadSponsor,collaborators,startDate,primaryCompletionDate,enrollmentInfo,eligibilityCriteria')
+2026-05-27 19:51:23,192 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 2: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW&aggFilters=interventionType:drug+bio+combo+dietary&fields=nctId,briefTitle,overallStatus,phases,conditions,interventions,briefSummary,detailedDescription,conditionMeshTerms,interventionMeshTerms,leadSponsor,collaborators,startDate,primaryCompletionDate,enrollmentInfo,eligibilityCriteria')
+2026-05-27 19:51:27,507 [WARNING] Fetch error on page (token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW), attempt 3: 400, message='Bad Request', url=URL('https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=100&pageToken=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW&aggFilters=interventionType:drug+bio+combo+dietary&fields=nctId,briefTitle,overallStatus,phases,conditions,interventions,briefSummary,detailedDescription,conditionMeshTerms,interventionMeshTerms,leadSponsor,collaborators,startDate,primaryCompletionDate,enrollmentInfo,eligibilityCriteria')
+2026-05-27 19:51:27,507 [ERROR] All 3 retries failed for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW
+2026-05-27 19:51:27,507 [ERROR] Skipping page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW after all retries
+2026-05-27 19:51:27,507 [INFO] M1 complete: 144 pages fetched
+2026-05-27 19:51:27,507 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:51:27,507 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:51:27,507 [INFO] M5 complete: 0 rows written
+2026-05-27 19:51:27,507 [INFO] M6: running spot checks...
+2026-05-27 19:51:27,507 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:51:27,524 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:51:27,524 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:51:27,524 [INFO] Pipeline complete in 7.0s. Exit code: 2
+2026-05-27 19:57:10,540 [INFO] Pipeline started: run_id=4ee79ccc-3f92-4be4-bb52-6f244a29faf0
+2026-05-27 19:57:10,540 [INFO] Loading lookup dictionaries...
+2026-05-27 19:57:10,540 [INFO] Loading DrugBank lookup...
+2026-05-27 19:57:10,540 [INFO] DrugBank loaded: 57 keys
+2026-05-27 19:57:10,540 [INFO] Loading ChEMBL lookup...
+2026-05-27 19:57:10,540 [INFO] ChEMBL loaded: 20 keys
+2026-05-27 19:57:10,540 [INFO] Merged lookup dict: 59 total keys
+2026-05-27 19:57:10,540 [INFO] Spawning 3 worker processes
+2026-05-27 19:57:10,540 [INFO] M1 start: resuming from page_token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, pages_fetched=144
+2026-05-27 19:57:10,954 [WARNING] 400 Bad Request for page token=ZVJj7o2Elu8o3lp1UdymprbumpOQJJxtZ_ag2vQW, token may be stale
+2026-05-27 19:57:10,964 [WARNING] Stale pageToken detected, resetting checkpoint and restarting from page 1
+2026-05-27 19:57:11,268 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-27 19:57:11,268 [ERROR] Failed to fetch first page after checkpoint reset
+2026-05-27 19:57:11,279 [INFO] M1 complete: 0 pages fetched
+2026-05-27 19:57:11,279 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-27 19:57:11,279 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-27 19:57:11,279 [INFO] M5 complete: 0 rows written
+2026-05-27 19:57:11,291 [INFO] M6: running spot checks...
+2026-05-27 19:57:11,291 [WARNING] M6: output CSV not found for spot check
+2026-05-27 19:57:11,294 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-27 19:57:11,294 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-27 19:57:11,294 [INFO] Pipeline complete in 0.8s. Exit code: 2
