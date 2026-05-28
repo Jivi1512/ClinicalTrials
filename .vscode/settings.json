@@ -1,4 +1,3 @@
-{
-  "python-envs.defaultEnvManager": "ms-python.python:conda",
-  "python-envs.defaultPackageManager": "ms-python.python:conda"
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:fb8d616967cb453d8e0e455e922b6350c7bc2475afc429d03c3c6afc8f63cd6a
+size 133

@@ -19,7 +19,7 @@ DRUGBANK_DB_PATH=os.path.join(LOOKUPS_DIR, "drugbank.db")
 CHEMBL_DB_PATH=os.path.join(LOOKUPS_DIR, "chembl.db")
 
 API_BASE_URL="https://clinicaltrials.gov/api/v2/studies"
-PAGE_SIZE=100
+PAGE_SIZE=1000
 SEMAPHORE_LIMIT=10
 QUEUE_MAX_PAGES=20
 CHUNK_SIZE=500
