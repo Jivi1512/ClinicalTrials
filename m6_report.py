@@ -3,6 +3,7 @@ import time
 import logging
 import requests
 from datetime import datetime
+from urllib.parse import urlencode
 from config import (
     RUN_REPORT_PATH, NULL_THRESHOLDS, API_BASE_URL,
     SPOT_CHECK_CONDITIONS, REQUEST_TIMEOUT, OUTPUT_CSV_PATH,
@@ -29,13 +30,9 @@ def _spot_check(pipeline_run_id):
 
     for condition in SPOT_CHECK_CONDITIONS:
         try:
-            params={
-                "format": "json",
-                "pageSize": 10,
-                "query.cond": condition,
-                "query.term": "AREA[InterventionType]DRUG OR AREA[InterventionType]BIOLOGICAL"
-            }
-            resp=requests.get(API_BASE_URL, params=params, timeout=REQUEST_TIMEOUT)
+            base=urlencode({"format": "json", "pageSize": 10, "query.cond": condition})
+            url=f"{API_BASE_URL}?{base}&aggFilters=interventionType:drug,bio,combo,dietary"
+            resp=requests.get(url, timeout=REQUEST_TIMEOUT)
             resp.raise_for_status()
             data=resp.json()
             studies=data.get("studies", [])

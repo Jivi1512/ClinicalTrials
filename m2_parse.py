@@ -70,10 +70,10 @@ def _parse_study(study):
     sponsor_mod=ps.get("sponsorCollaboratorsModule", {})
     elig_mod=ps.get("eligibilityModule", {})
 
-    cond_mesh_raw=ds.get("conditionMeshList") or ds.get("conditionMeshes") or {}
-    intr_mesh_raw=ds.get("interventionMeshList") or ds.get("interventionMeshes") or {}
-    cond_mesh=cond_mesh_raw.get("meshes") or cond_mesh_raw.get("mesh") or []
-    intr_mesh=intr_mesh_raw.get("meshes") or intr_mesh_raw.get("mesh") or []
+    cond_mesh_raw=ds.get("conditionBrowseModule") or ds.get("conditionMeshList") or ds.get("conditionMeshes") or {}
+    intr_mesh_raw=ds.get("interventionBrowseModule") or ds.get("interventionMeshList") or ds.get("interventionMeshes") or {}
+    cond_mesh=cond_mesh_raw.get("meshes") or cond_mesh_raw.get("mesh") or cond_mesh_raw.get("conditionMesh") or []
+    intr_mesh=intr_mesh_raw.get("meshes") or intr_mesh_raw.get("mesh") or intr_mesh_raw.get("interventionMesh") or []
 
     nct_id=id_mod.get("nctId")
     brief_title=id_mod.get("briefTitle")

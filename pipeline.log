@@ -227,3 +227,91 @@
 2026-05-27 19:57:11,294 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
 2026-05-27 19:57:11,294 [ERROR] M6: spot check pass rate 0.00% below 90%
 2026-05-27 19:57:11,294 [INFO] Pipeline complete in 0.8s. Exit code: 2
+2026-05-28 11:11:59,653 [INFO] Pipeline started: run_id=381edca6-7750-4b07-b4c9-5d91fd2cf156
+2026-05-28 11:11:59,654 [INFO] Loading lookup dictionaries...
+2026-05-28 11:11:59,654 [INFO] Loading DrugBank lookup...
+2026-05-28 11:11:59,656 [INFO] DrugBank loaded: 57 keys
+2026-05-28 11:11:59,656 [INFO] Loading ChEMBL lookup...
+2026-05-28 11:11:59,659 [INFO] ChEMBL loaded: 20 keys
+2026-05-28 11:11:59,660 [INFO] Merged lookup dict: 59 total keys
+2026-05-28 11:11:59,660 [INFO] Spawning 3 worker processes
+2026-05-28 11:11:59,684 [INFO] M1 start: resuming from page_token=None, pages_fetched=0
+2026-05-28 11:12:00,269 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:12:00,269 [WARNING] Stale pageToken detected, resetting checkpoint and restarting from page 1
+2026-05-28 11:12:00,595 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:12:00,595 [ERROR] Failed to fetch first page after checkpoint reset
+2026-05-28 11:12:00,596 [INFO] M1 complete: 0 pages fetched
+2026-05-28 11:12:00,599 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-28 11:12:00,599 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-28 11:12:00,600 [INFO] M5 complete: 0 rows written
+2026-05-28 11:12:00,610 [INFO] M6: running spot checks...
+2026-05-28 11:12:00,612 [WARNING] M6: output CSV not found for spot check
+2026-05-28 11:12:00,614 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-28 11:12:00,615 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-28 11:12:00,616 [INFO] Pipeline complete in 1.0s. Exit code: 2
+2026-05-28 11:24:21,919 [INFO] Pipeline started: run_id=b48de645-b6d1-45c2-b040-b3b7961e67c9
+2026-05-28 11:24:21,939 [INFO] Loading lookup dictionaries...
+2026-05-28 11:24:21,940 [INFO] Loading DrugBank lookup...
+2026-05-28 11:24:21,942 [INFO] DrugBank loaded: 57 keys
+2026-05-28 11:24:21,947 [INFO] Loading ChEMBL lookup...
+2026-05-28 11:24:21,955 [INFO] ChEMBL loaded: 20 keys
+2026-05-28 11:24:21,955 [INFO] Merged lookup dict: 59 total keys
+2026-05-28 11:24:21,956 [INFO] Spawning 3 worker processes
+2026-05-28 11:24:21,962 [INFO] M1 start: resuming from page_token=None, pages_fetched=0
+2026-05-28 11:24:22,483 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:24:22,484 [WARNING] Stale pageToken detected, resetting checkpoint and restarting from page 1
+2026-05-28 11:24:22,837 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:24:22,838 [ERROR] Failed to fetch first page after checkpoint reset
+2026-05-28 11:24:22,839 [INFO] M1 complete: 0 pages fetched
+2026-05-28 11:24:22,841 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-28 11:24:22,841 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-28 11:24:22,842 [INFO] M5 complete: 0 rows written
+2026-05-28 11:24:22,850 [INFO] M6: running spot checks...
+2026-05-28 11:24:22,851 [WARNING] M6: output CSV not found for spot check
+2026-05-28 11:24:22,853 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-28 11:24:22,854 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-28 11:24:22,855 [INFO] Pipeline complete in 0.9s. Exit code: 2
+2026-05-28 11:29:52,838 [INFO] Pipeline started: run_id=62151ec5-a9a7-4563-80c1-3ca8cebe558a
+2026-05-28 11:29:52,839 [INFO] Loading lookup dictionaries...
+2026-05-28 11:29:52,839 [INFO] Loading DrugBank lookup...
+2026-05-28 11:29:52,841 [INFO] DrugBank loaded: 57 keys
+2026-05-28 11:29:52,841 [INFO] Loading ChEMBL lookup...
+2026-05-28 11:29:52,842 [INFO] ChEMBL loaded: 20 keys
+2026-05-28 11:29:52,842 [INFO] Merged lookup dict: 59 total keys
+2026-05-28 11:29:52,842 [INFO] Spawning 3 worker processes
+2026-05-28 11:29:52,845 [INFO] M1 start: resuming from page_token=None, pages_fetched=0
+2026-05-28 11:29:53,332 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:29:53,333 [WARNING] Stale pageToken detected, resetting checkpoint and restarting from page 1
+2026-05-28 11:29:53,655 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:29:53,656 [ERROR] Failed to fetch first page after checkpoint reset
+2026-05-28 11:29:53,658 [INFO] M1 complete: 0 pages fetched
+2026-05-28 11:29:53,661 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-28 11:29:53,661 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-28 11:29:53,662 [INFO] M5 complete: 0 rows written
+2026-05-28 11:29:53,678 [INFO] M6: running spot checks...
+2026-05-28 11:29:53,679 [WARNING] M6: output CSV not found for spot check
+2026-05-28 11:29:53,681 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-28 11:29:53,683 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-28 11:29:53,683 [INFO] Pipeline complete in 0.8s. Exit code: 2
+2026-05-28 11:30:46,111 [INFO] Pipeline started: run_id=f65bf107-9968-4158-bc3c-1b805b1671f8
+2026-05-28 11:30:46,112 [INFO] Loading lookup dictionaries...
+2026-05-28 11:30:46,113 [INFO] Loading DrugBank lookup...
+2026-05-28 11:30:46,114 [INFO] DrugBank loaded: 57 keys
+2026-05-28 11:30:46,115 [INFO] Loading ChEMBL lookup...
+2026-05-28 11:30:46,116 [INFO] ChEMBL loaded: 20 keys
+2026-05-28 11:30:46,116 [INFO] Merged lookup dict: 59 total keys
+2026-05-28 11:30:46,116 [INFO] Spawning 3 worker processes
+2026-05-28 11:30:46,124 [INFO] M1 start: resuming from page_token=None, pages_fetched=0
+2026-05-28 11:30:46,676 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:30:46,676 [WARNING] Stale pageToken detected, resetting checkpoint and restarting from page 1
+2026-05-28 11:30:46,997 [WARNING] 400 Bad Request for page token=None, token may be stale
+2026-05-28 11:30:46,998 [ERROR] Failed to fetch first page after checkpoint reset
+2026-05-28 11:30:46,999 [INFO] M1 complete: 0 pages fetched
+2026-05-28 11:30:47,003 [INFO] M2 complete: 0 total rows parsed across 0 chunks
+2026-05-28 11:30:47,003 [INFO] M1 fetch complete. Waiting for 0 M4 worker chunks...
+2026-05-28 11:30:47,004 [INFO] M5 complete: 0 rows written
+2026-05-28 11:30:47,041 [INFO] M6: running spot checks...
+2026-05-28 11:30:47,041 [WARNING] M6: output CSV not found for spot check
+2026-05-28 11:30:47,042 [INFO] M6: report written to d:\ChEMBL\clinicaltrials_pipeline\output\run_report.json
+2026-05-28 11:30:47,043 [ERROR] M6: spot check pass rate 0.00% below 90%
+2026-05-28 11:30:47,043 [INFO] Pipeline complete in 0.9s. Exit code: 2

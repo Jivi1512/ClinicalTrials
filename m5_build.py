@@ -19,14 +19,23 @@ class DatasetBuilder:
     def __init__(self, pipeline_run_id):
         self._run_id=pipeline_run_id
         self._seen_pairs=set()
+        if os.path.exists(OUTPUT_CSV_PATH):
+            try:
+                existing=pd.read_csv(OUTPUT_CSV_PATH, usecols=["nct_id", "drug_name_norm"])
+                for _, r in existing.iterrows():
+                    nct=str(r.get("nct_id") or "")
+                    norm=str(r.get("drug_name_norm") or "")
+                    self._seen_pairs.add(nct+"|||"+norm)
+                logging.info(f"M5: pre-loaded {len(self._seen_pairs)} existing pairs from output CSV")
+            except Exception as e:
+                logging.warning(f"M5: could not pre-load existing pairs: {e}")
         self._stats={
             "total_rows": 0,
             "null_counts": {col: 0 for col in ALL_OUTPUT_COLUMNS},
             "target_source_dist": {"drugbank": 0, "chembl": 0, "drugbank+chembl": 0, "mesh": 0, "nlp": 0, "none": 0},
             "phase_dist": {},
             "status_dist": {},
-            "validation_warnings_count": 0
-        }
+            "validation_warnings_count": 0}
         self._main_header_written=os.path.exists(OUTPUT_CSV_PATH)
         self._review_header_written=os.path.exists(REVIEW_QUEUE_PATH)
         self._dupes_header_written=os.path.exists(DUPLICATES_LOG_PATH)

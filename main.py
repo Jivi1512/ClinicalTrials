@@ -3,14 +3,12 @@ import asyncio
 import logging
 import time
 import uuid
+import os
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import cpu_count
 from datetime import datetime
-
-import logging
-import logging
-from config import CHUNK_SIZE, QUEUE_MAX_PAGES
-from state import read_api_checkpoint, get_pipeline_run_id, allocate_pair_range
+from config import CHUNK_SIZE, QUEUE_MAX_PAGES, OUTPUT_CSV_PATH, REVIEW_QUEUE_PATH, DUPLICATES_LOG_PATH
+from state import read_api_checkpoint, allocate_pair_range
 from lookups.lookup_loader import load_lookup_dict
 from m1_fetch import fetch_all_pages
 from m2_parse import parse_pages
@@ -34,6 +32,13 @@ async def run_pipeline():
     pipeline_run_id=str(uuid.uuid4())
     logging.info(f"Pipeline started: run_id={pipeline_run_id}")
 
+    checkpoint=read_api_checkpoint()
+    if checkpoint.get("pages_fetched", 0)==0:
+        for path in [OUTPUT_CSV_PATH, REVIEW_QUEUE_PATH, DUPLICATES_LOG_PATH]:
+            if os.path.exists(path):
+                os.remove(path)
+                logging.info(f"Cleared stale output file: {path}")
+
     logging.info("Loading lookup dictionaries...")
     lookup_dict=load_lookup_dict()
 
@@ -56,10 +61,8 @@ async def run_pipeline():
 
     async for df_chunk, chunk_index in parse_pages(page_queue):
         df_chunk=normalize_chunk(df_chunk)
-
         n_rows=len(df_chunk)
         pair_id_start=allocate_pair_range(n_rows)
-
         serialized=df_chunk.to_dict("records")
         future=loop.run_in_executor(
             executor,
@@ -75,7 +78,6 @@ async def run_pipeline():
     logging.info(f"M1 fetch complete. Waiting for {len(pending_futures)} M4 worker chunks...")
 
     results=await asyncio.gather(*pending_futures)
-
     results_sorted=sorted(results, key=lambda x: x[0])
 
     for returned_index, records in results_sorted:

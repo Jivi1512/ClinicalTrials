@@ -10,7 +10,7 @@ from config import (
     API_BASE_URL, PAGE_SIZE,
     SEMAPHORE_LIMIT, TOKEN_BUCKET_RATE, TOKEN_BUCKET_INIT,
     RETRY_MAX, RETRY_BACKOFF_BASE, REQUEST_TIMEOUT,
-    AGG_FILTERS, API_FIELDS_PARAM
+    FILTER_ADVANCED, API_FIELDS_PARAM
 )
 
 class TokenBucket:
@@ -38,7 +38,7 @@ def _build_url(page_token):
     params={"format": "json", "pageSize": PAGE_SIZE, "countTotal": "true"}
     if page_token:
         params["pageToken"]=page_token
-    params["aggFilters"]=AGG_FILTERS
+    params["filter.advanced"]=FILTER_ADVANCED
     params["fields"]=API_FIELDS_PARAM
     return f"{API_BASE_URL}?{urlencode(params)}"
 

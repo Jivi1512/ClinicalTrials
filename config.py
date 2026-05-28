@@ -38,13 +38,13 @@ INTERVENTION_TYPES=[
     "COMBINATION_PRODUCT",
     "DIETARY_SUPPLEMENT"
 ]
-AGG_FILTERS="interventionType:drug,bio,combo,dietary"
+FILTER_ADVANCED="AREA[InterventionType]DRUG OR AREA[InterventionType]BIOLOGICAL OR AREA[InterventionType]COMBINATION_PRODUCT OR AREA[InterventionType]DIETARY_SUPPLEMENT"
 API_FIELDS_PARAM=",".join([
-    "nctId","briefTitle","overallStatus","phases","conditions",
-    "interventions","briefSummary","detailedDescription",
-    "conditionMeshTerms","interventionMeshTerms",
-    "leadSponsor","collaborators","startDate",
-    "primaryCompletionDate","enrollmentInfo","eligibilityCriteria"
+    "NCTId","BriefTitle","OverallStatus","Phase","Condition",
+    "InterventionName","InterventionType","BriefSummary","DetailedDescription",
+    "ConditionMesh","InterventionMesh",
+    "LeadSponsorName","CollaboratorName","StartDate",
+    "PrimaryCompletionDate","EnrollmentCount","EnrollmentType","EligibilityCriteria"
 ])
 
 TRIAL_STATUS_ENUM=[
@@ -55,7 +55,8 @@ TRIAL_STATUS_ENUM=[
     "NOT_YET_RECRUITING",
     "SUSPENDED",
     "TERMINATED",
-    "WITHDRAWN"
+    "WITHDRAWN",
+    "UNKNOWN"
 ]
 
 API_FIELDS=[
