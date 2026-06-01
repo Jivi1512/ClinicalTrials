@@ -30,8 +30,10 @@ def _spot_check(pipeline_run_id):
 
     for condition in SPOT_CHECK_CONDITIONS:
         try:
-            base=urlencode({"format": "json", "pageSize": 10, "query.cond": condition})
-            url=f"{API_BASE_URL}?{base}&aggFilters=interventionType:drug,bio,combo,dietary"
+            from urllib.parse import urlencode
+            params=urlencode({"format": "json", "pageSize": 10, "query.cond": condition,
+                              "filter.advanced": "AREA[InterventionType]DRUG OR AREA[InterventionType]BIOLOGICAL"})
+            url=f"{API_BASE_URL}?{params}"
             resp=requests.get(url, timeout=REQUEST_TIMEOUT)
             resp.raise_for_status()
             data=resp.json()

@@ -2,15 +2,7 @@ import re
 import asyncio
 import logging
 import pandas as pd
-from config import (
-    CHUNK_SIZE, INTERVENTION_TYPES, PHASE_ORDER,
-    ANCHOR_KEYWORDS, NLP_WINDOW_SIZE
-)
-
-_NLP_PATTERN=re.compile(
-    r"[^.!?]*(?:" + "|".join(re.escape(k) for k in ANCHOR_KEYWORDS) + r")[^.!?]*[.!?]",
-    re.IGNORECASE
-)
+from config import CHUNK_SIZE, INTERVENTION_TYPES, PHASE_ORDER
 
 def _safe_get(d, *keys, default=None):
     for k in keys:
@@ -38,24 +30,6 @@ def _pipe(lst):
         return None
     cleaned=[str(x).strip() for x in lst if x]
     return "|".join(cleaned) if cleaned else None
-
-def _extract_nlp_candidates(text_brief, text_detailed):
-    candidates=[]
-    sentence_count=0
-    for text in [text_brief, text_detailed]:
-        if not text:
-            continue
-        sentences=re.split(r"(?<=[.!?])\s+", text)
-        for i, sent in enumerate(sentences):
-            if _NLP_PATTERN.search(sent):
-                window_start=max(0, i-NLP_WINDOW_SIZE)
-                window_end=min(len(sentences), i+NLP_WINDOW_SIZE+1)
-                window=" ".join(sentences[window_start:window_end])
-                candidates.append(window)
-                sentence_count+=1
-    if candidates:
-        return " ... ".join(candidates[:5])
-    return None
 
 def _parse_study(study):
     ps=study.get("protocolSection", {})
@@ -101,8 +75,6 @@ def _parse_study(study):
 
     eligibility=elig_mod.get("eligibilityCriteria")
 
-    nlp_candidate=_extract_nlp_candidates(brief_summary, detailed_description)
-
     base={
         "nct_id": nct_id,
         "brief_title": brief_title,
@@ -113,7 +85,6 @@ def _parse_study(study):
         "mesh_terms_intervention": mesh_intervention,
         "brief_summary": brief_summary,
         "detailed_description": detailed_description,
-        "nlp_candidate_text": nlp_candidate,
         "sponsor_lead": sponsor_lead,
         "sponsor_collaborators": sponsor_collabs,
         "start_date": start_date,

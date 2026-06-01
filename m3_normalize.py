@@ -8,16 +8,6 @@ _DOSAGE_RE=re.compile(DOSAGE_PATTERN, re.IGNORECASE)
 _ROUTE_RE=re.compile(ROUTE_PATTERN, re.IGNORECASE)
 _WHITESPACE_RE=re.compile(r"\s+")
 
-def _build_brand_map():
-    try:
-        from lookups.lookup_loader import build_brand_to_generic
-        return build_brand_to_generic()
-    except Exception as e:
-        logging.warning(f"Could not load brand map: {e}")
-        return {}
-
-_BRAND_MAP=_build_brand_map()
-
 def normalize_chunk(df):
     if "drug_name_raw" not in df.columns:
         df["drug_name_norm"]=None
@@ -33,9 +23,6 @@ def normalize_chunk(df):
     series=series.str.strip()
     series=series.where(series!="nan", other=None)
     series=series.where(series!="", other=None)
-
-    if _BRAND_MAP:
-        series=series.map(lambda x: _BRAND_MAP.get(x, x) if x else x)
 
     df=df.copy()
     df["drug_name_norm"]=series

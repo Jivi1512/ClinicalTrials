@@ -12,7 +12,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 REVIEW_COLUMNS=[
     "pair_id", "nct_id", "drug_name_raw", "drug_name_norm",
-    "nlp_candidate_text", "mesh_terms_intervention"
+    "mesh_terms_intervention"
 ]
 
 class DatasetBuilder:
@@ -32,7 +32,7 @@ class DatasetBuilder:
         self._stats={
             "total_rows": 0,
             "null_counts": {col: 0 for col in ALL_OUTPUT_COLUMNS},
-            "target_source_dist": {"drugbank": 0, "chembl": 0, "drugbank+chembl": 0, "mesh": 0, "nlp": 0, "none": 0},
+            "target_source_dist": {"chembl": 0, "none": 0},
             "phase_dist": {},
             "status_dist": {},
             "validation_warnings_count": 0}

@@ -15,9 +15,7 @@ REVIEW_QUEUE_PATH=os.path.join(OUTPUT_DIR, "review_queue.csv")
 RUN_REPORT_PATH=os.path.join(OUTPUT_DIR, "run_report.json")
 DUPLICATES_LOG_PATH=os.path.join(OUTPUT_DIR, "duplicates_log.csv")
 
-DRUGBANK_DB_PATH=os.path.join(LOOKUPS_DIR, "drugbank.db")
-CHEMBL_DB_PATH=os.path.join(LOOKUPS_DIR, "chembl.db")
-
+# ClinicalTrials.gov API
 API_BASE_URL="https://clinicaltrials.gov/api/v2/studies"
 PAGE_SIZE=1000
 SEMAPHORE_LIMIT=10
@@ -27,10 +25,16 @@ TOKEN_BUCKET_RATE=5
 TOKEN_BUCKET_INIT=0.5
 RETRY_MAX=3
 RETRY_BACKOFF_BASE=2
-REQUEST_TIMEOUT=10
+REQUEST_TIMEOUT=30
 CACHE_TTL_DAYS=7
-NLP_WINDOW_SIZE=2
 PAIR_RANGE_SIZE=10000
+
+# ChEMBL REST API
+CHEMBL_API_BASE="https://www.ebi.ac.uk/chembl/api/data"
+CHEMBL_SEMAPHORE=10       # max concurrent ChEMBL requests
+CHEMBL_TIMEOUT=20         # seconds per request
+CHEMBL_RETRY_MAX=3        # retries on 5xx / timeout
+CHEMBL_RETRY_BACKOFF=2    # base seconds for exponential backoff
 
 INTERVENTION_TYPES=[
     "DRUG",
@@ -59,38 +63,13 @@ TRIAL_STATUS_ENUM=[
     "UNKNOWN"
 ]
 
-API_FIELDS=[
-    "nctId",
-    "briefTitle",
-    "overallStatus",
-    "phases",
-    "conditions",
-    "interventions",
-    "briefSummary",
-    "detailedDescription",
-    "conditionMeshTerms",
-    "interventionMeshTerms",
-    "leadSponsor",
-    "collaborators",
-    "startDate",
-    "primaryCompletionDate",
-    "enrollmentInfo",
-    "eligibilityCriteria"
-]
-
 NULL_THRESHOLDS={
     "nct_id": 0.00,
     "drug_name_norm": 0.02,
     "condition": 0.01,
     "phase": 0.15,
-    "target_primary": 0.45
+    "target_primary": 0.30   # raised realism: biologics often not in ChEMBL
 }
-
-ANCHOR_KEYWORDS=[
-    "inhibitor", "agonist", "antagonist", "receptor",
-    "blocker", "modulator", "activator", "binder",
-    "kinase", "enzyme", "transporter", "channel"
-]
 
 PHASE_ORDER={
     "PHASE4": 5,
@@ -119,24 +98,6 @@ SPOT_CHECK_CONDITIONS=[
     "Alzheimer", "depression", "arthritis", "COVID"
 ]
 
-MESH_TARGET_MAP={
-    "antineoplastic agents": "tumor_suppressor",
-    "enzyme inhibitors": "enzyme",
-    "receptor agonists": "receptor",
-    "receptor antagonists": "receptor",
-    "kinase inhibitors": "kinase",
-    "protease inhibitors": "protease",
-    "anti-inflammatory agents": "inflammatory_pathway",
-    "antiviral agents": "viral_target",
-    "antibiotics": "bacterial_target",
-    "immunosuppressive agents": "immune_pathway",
-    "antidepressive agents": "neurotransmitter_receptor",
-    "antihypertensive agents": "cardiovascular_target",
-    "anticoagulants": "coagulation_factor",
-    "hypoglycemic agents": "glucose_transporter",
-    "bronchodilator agents": "beta_receptor"
-}
-
 ALL_OUTPUT_COLUMNS=[
     "pair_id", "pipeline_run_id", "extraction_date", "nct_id",
     "brief_title", "overall_status", "phase", "conditions",
@@ -145,7 +106,7 @@ ALL_OUTPUT_COLUMNS=[
     "intervention_description", "target_primary", "targets_raw",
     "target_source", "target_confidence", "target_evidence_text",
     "target_evidence_source", "reference_db_version",
-    "brief_summary", "detailed_description", "nlp_candidate_text",
+    "brief_summary", "detailed_description",
     "sponsor_lead", "sponsor_collaborators", "start_date",
     "completion_date", "enrollment_count", "enrollment_type",
     "eligibility_criteria", "eligibility_parsed",

@@ -4,16 +4,14 @@ import logging
 import time
 import uuid
 import os
-from concurrent.futures import ProcessPoolExecutor
-from multiprocessing import cpu_count
+import aiohttp
 from datetime import datetime
-from config import CHUNK_SIZE, QUEUE_MAX_PAGES, OUTPUT_CSV_PATH, REVIEW_QUEUE_PATH, DUPLICATES_LOG_PATH
+from config import CHUNK_SIZE, QUEUE_MAX_PAGES, OUTPUT_CSV_PATH, REVIEW_QUEUE_PATH, DUPLICATES_LOG_PATH, CHEMBL_SEMAPHORE
 from state import read_api_checkpoint, allocate_pair_range
-from lookups.lookup_loader import load_lookup_dict
 from m1_fetch import fetch_all_pages
 from m2_parse import parse_pages
 from m3_normalize import normalize_chunk
-from m4_resolve import worker_init, resolve_chunk_worker
+from m4_resolve import resolve_chunk_async, get_cache_stats
 from m5_build import DatasetBuilder
 from m6_report import generate_report
 
@@ -39,52 +37,35 @@ async def run_pipeline():
                 os.remove(path)
                 logging.info(f"Cleared stale output file: {path}")
 
-    logging.info("Loading lookup dictionaries...")
-    lookup_dict=load_lookup_dict()
-
-    n_workers=max(1, cpu_count()-1)
-    logging.info(f"Spawning {n_workers} worker processes")
-
-    executor=ProcessPoolExecutor(
-        max_workers=n_workers,
-        initializer=worker_init,
-        initargs=(lookup_dict,)
-    )
+    # Shared ChEMBL HTTP session for all resolve calls
+    connector=aiohttp.TCPConnector(limit=CHEMBL_SEMAPHORE * 2)
+    chembl_sem=asyncio.Semaphore(CHEMBL_SEMAPHORE)
 
     page_queue=asyncio.Queue(maxsize=QUEUE_MAX_PAGES)
     builder=DatasetBuilder(pipeline_run_id)
-    pending_futures=[]
-    chunk_index_counter=0
-    loop=asyncio.get_running_loop()
 
     fetch_task=asyncio.create_task(fetch_all_pages(page_queue))
 
-    async for df_chunk, chunk_index in parse_pages(page_queue):
-        df_chunk=normalize_chunk(df_chunk)
-        n_rows=len(df_chunk)
-        pair_id_start=allocate_pair_range(n_rows)
-        serialized=df_chunk.to_dict("records")
-        future=loop.run_in_executor(
-            executor,
-            resolve_chunk_worker,
-            serialized,
-            chunk_index,
-            pair_id_start
-        )
-        pending_futures.append(future)
-        chunk_index_counter+=1
+    async with aiohttp.ClientSession(connector=connector) as chembl_session:
+        # Stream: parse → normalize → resolve → write, one chunk at a time
+        async for df_chunk, chunk_index in parse_pages(page_queue):
+            df_chunk=normalize_chunk(df_chunk)
+            pair_id_start=allocate_pair_range(len(df_chunk))
+
+            returned_index, records=await resolve_chunk_async(
+                df_chunk, chembl_session, chembl_sem, chunk_index, pair_id_start
+            )
+            builder.process_chunk(returned_index, records)
 
     await fetch_task
-    logging.info(f"M1 fetch complete. Waiting for {len(pending_futures)} M4 worker chunks...")
-
-    results=await asyncio.gather(*pending_futures)
-    results_sorted=sorted(results, key=lambda x: x[0])
-
-    for returned_index, records in results_sorted:
-        builder.process_chunk(returned_index, records)
 
     stats=builder.get_stats()
-    logging.info(f"M5 complete: {stats['total_rows']} rows written")
+    cache_stats=get_cache_stats()
+    logging.info(
+        f"M5 complete: {stats['total_rows']} rows written. "
+        f"ChEMBL cache: {cache_stats['cache_resolved']}/{cache_stats['cache_total']} resolved "
+        f"({cache_stats['cache_miss']} misses)"
+    )
 
     checkpoint=read_api_checkpoint()
     pages_fetched=checkpoint.get("pages_fetched", 0)
@@ -93,8 +74,7 @@ async def run_pipeline():
     runtime=time.monotonic()-start_time
     exit_code=generate_report(stats, pages_fetched, total_count, pipeline_run_id, runtime)
 
-    executor.shutdown(wait=False)
-    logging.info(f"Pipeline complete in {runtime:.1f}s. Exit code: {exit_code}")
+    logging.info(f"Pipeline complete in {runtime:.1f}s ({runtime/60:.1f} min). Exit code: {exit_code}")
     return exit_code
 
 def main():
