@@ -84,6 +84,8 @@ async def fetch_all_pages(page_queue):
     semaphore=asyncio.Semaphore(SEMAPHORE_LIMIT)
 
     logging.info(f"M1 start: resuming from page_token={page_token}, pages_fetched={pages_fetched}")
+    fetch_start = time.monotonic()
+    total_pages_estimate = 0  # updated from first response
 
     async with aiohttp.ClientSession() as session:
         while True:
@@ -125,7 +127,10 @@ async def fetch_all_pages(page_queue):
 
             if pages_fetched==0:
                 total_count=response_data.get("totalCount", 0)
-                logging.info(f"Total records expected from API: {total_count}")
+                total_pages_estimate = max(1, -(-total_count // PAGE_SIZE))  # ceiling div
+                logging.info(
+                    f"M1: total records={total_count:,} → ~{total_pages_estimate} pages to fetch"
+                )
 
             write_page_cache(page_token, response_data)
             pages_fetched+=1
@@ -140,7 +145,16 @@ async def fetch_all_pages(page_queue):
             })
 
             await page_queue.put(response_data)
-            logging.info(f"M1: fetched page {pages_fetched}, next_token={next_token}")
+            elapsed = time.monotonic() - fetch_start
+            rate = pages_fetched / elapsed if elapsed > 0 else 0
+            eta_s = (total_pages_estimate - pages_fetched) / rate if rate > 0 and total_pages_estimate > 0 else 0
+            eta_str = f"{eta_s/60:.1f}min" if eta_s >= 60 else f"{eta_s:.0f}s"
+            pct = f"{pages_fetched/max(total_pages_estimate,1)*100:.1f}%" if total_pages_estimate else "?"
+            logging.info(
+                f"M1: page {pages_fetched}/{total_pages_estimate} ({pct}) | "
+                f"{rate:.2f} pages/s | ETA: {eta_str} | "
+                f"next_token={'...' + next_token[-12:] if next_token else 'None'}"
+            )
 
             if not next_token:
                 break

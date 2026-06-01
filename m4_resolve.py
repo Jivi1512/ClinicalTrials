@@ -1,41 +1,33 @@
 """
-m4_resolve.py — ChEMBL API-based drug→target resolver.
+m4_resolve.py — Batched async ChEMBL REST API resolver.
 
-Strategy:
-  1. Collect unique normalized drug names from the chunk.
-  2. Concurrently query ChEMBL molecule endpoint (pref_name__iexact) for each unique name.
-     On miss, fall back to molecule synonym search.
-  3. For each resolved ChEMBL ID, query the mechanism endpoint (parent_molecule_chembl_id).
-  4. Cache all results in-process across chunks so each unique drug is queried at most once.
-  5. Apply the cache to the full chunk via vectorized pandas map.
-
-Output columns added per row:
-  pair_id, targets_raw, target_primary, target_source, target_confidence,
-  target_evidence_text, target_evidence_source, reference_db_version
+Optimizations vs. per-drug sequential approach:
+  • pref_name__in batch:  50 drug names → 1 API call  (was 50 calls)
+  • mechanism batch:     100 ChEMBL IDs → 1 API call  (was 100 calls)
+  • Synonym fallback runs concurrently with mechanism batch
+  • In-process cache shared across all chunks — each unique drug queried once
+  • Vectorized pandas assignment (no iterrows)
 """
 
 import asyncio
 import logging
 import re
+import time
 import pandas as pd
 import aiohttp
 from datetime import date
 from config import (
     CHEMBL_API_BASE, CHEMBL_SEMAPHORE, CHEMBL_TIMEOUT,
-    CHEMBL_RETRY_MAX, CHEMBL_RETRY_BACKOFF
+    CHEMBL_RETRY_MAX, CHEMBL_RETRY_BACKOFF,
+    CHEMBL_BATCH_SIZE, CHEMBL_MECH_BATCH_SIZE, CHEMBL_SYNONYM_FALLBACK
 )
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Module-level cache: {drug_name_norm → resolved_entry | None}
-# Persists across all chunks within a pipeline run.
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Module-level cache ────────────────────────────────────────────────────────
+# {drug_name_norm → {target_primary, targets_raw, ...} | None}
 _chembl_cache: dict = {}
 _DB_VERSION = f"ChEMBL-{date.today().strftime('%Y%m%d')}"
-
-# Minimum candidate word length to accept as a name (avoids junk)
 _MIN_NAME_LEN = 3
 
-# Regex to strip trailing salt/form suffixes before ChEMBL lookup
 _CLEAN_RE = re.compile(
     r"\s+(?:hydrochloride|hcl|sodium|potassium|sulfate|phosphate|acetate"
     r"|tartrate|citrate|mesylate|maleate|fumarate|bromide|chloride"
@@ -43,166 +35,214 @@ _CLEAN_RE = re.compile(
     re.IGNORECASE
 )
 
+# Track synonym fallback budget across the whole run
+_synonym_budget_used: int = 0
+
 
 def _clean_for_chembl(name: str) -> str:
-    """Light cleaning for ChEMBL API lookup (already normalized by M3)."""
-    if not name:
-        return name
-    cleaned = _CLEAN_RE.sub("", name).strip()
-    return cleaned if len(cleaned) >= _MIN_NAME_LEN else name
+    """Strip residual salt suffixes before ChEMBL lookup."""
+    c = _CLEAN_RE.sub("", name).strip()
+    return c if len(c) >= _MIN_NAME_LEN else name
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# ChEMBL API helpers (all async)
-# ──────────────────────────────────────────────────────────────────────────────
+# ── HTTP helper ───────────────────────────────────────────────────────────────
 
-async def _chembl_get(session: aiohttp.ClientSession, url: str, params: dict) -> dict | None:
-    """GET a ChEMBL API endpoint with retry on 5xx/timeout. Returns JSON or None."""
+async def _chembl_get(
+    session: aiohttp.ClientSession,
+    endpoint: str,
+    params: dict,
+    sem: asyncio.Semaphore
+) -> dict | None:
+    url = f"{CHEMBL_API_BASE}/{endpoint}"
     for attempt in range(CHEMBL_RETRY_MAX + 1):
         try:
-            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=CHEMBL_TIMEOUT)) as resp:
-                if resp.status == 200:
-                    return await resp.json(content_type=None)
-                if resp.status == 429:
-                    wait = CHEMBL_RETRY_BACKOFF ** (attempt + 1)
-                    logging.debug(f"ChEMBL 429, backing off {wait}s")
-                    await asyncio.sleep(wait)
-                    continue
-                if resp.status >= 500:
-                    wait = CHEMBL_RETRY_BACKOFF ** (attempt + 1)
-                    await asyncio.sleep(wait)
-                    continue
-                return None  # 404, 400, etc.
+            async with sem:
+                async with session.get(
+                    url, params=params,
+                    timeout=aiohttp.ClientTimeout(total=CHEMBL_TIMEOUT)
+                ) as resp:
+                    if resp.status == 200:
+                        return await resp.json(content_type=None)
+                    if resp.status == 429:
+                        wait = CHEMBL_RETRY_BACKOFF ** (attempt + 1)
+                        logging.warning(f"ChEMBL 429 rate-limit; backing off {wait}s")
+                        await asyncio.sleep(wait)
+                        continue
+                    if resp.status >= 500:
+                        await asyncio.sleep(CHEMBL_RETRY_BACKOFF ** (attempt + 1))
+                        continue
+                    return None  # 404 / 400 — don't retry
         except asyncio.TimeoutError:
+            logging.debug(f"ChEMBL timeout ({endpoint}), attempt {attempt+1}")
             await asyncio.sleep(CHEMBL_RETRY_BACKOFF ** (attempt + 1))
-        except aiohttp.ClientError as e:
-            logging.debug(f"ChEMBL client error: {e}")
+        except aiohttp.ClientError as exc:
+            logging.debug(f"ChEMBL client error: {exc}")
             await asyncio.sleep(CHEMBL_RETRY_BACKOFF ** (attempt + 1))
     return None
 
 
-async def _get_chembl_id(drug_name: str, session: aiohttp.ClientSession, sem: asyncio.Semaphore) -> str | None:
+# ── Batch molecule lookup ─────────────────────────────────────────────────────
+
+async def _batch_molecules(
+    names: list[str],
+    session: aiohttp.ClientSession,
+    sem: asyncio.Semaphore
+) -> dict[str, str]:
     """
-    Look up a ChEMBL molecule by preferred name (exact, case-insensitive).
-    Falls back to synonym search if exact match fails.
-    Returns parent_chembl_id or None.
+    Batch pref_name__in lookup for a list of drug names.
+    ChEMBL stores pref_names in UPPERCASE; we send uppercase and map back.
+    Returns {original_lowercase_name: parent_chembl_id}.
     """
-    async with sem:
-        # Primary: pref_name exact match
-        data = await _chembl_get(
-            session,
-            f"{CHEMBL_API_BASE}/molecule",
-            {"pref_name__iexact": drug_name, "format": "json", "limit": 1}
+    if not names:
+        return {}
+
+    # Build upper→lower mapping (multiple originals may map to same upper)
+    upper_to_lower: dict[str, str] = {}
+    for n in names:
+        u = _clean_for_chembl(n).upper()
+        if u not in upper_to_lower:
+            upper_to_lower[u] = n
+    upper_names = list(upper_to_lower)
+
+    # Split into batches and fire all concurrently
+    batches = [
+        upper_names[i: i + CHEMBL_BATCH_SIZE]
+        for i in range(0, len(upper_names), CHEMBL_BATCH_SIZE)
+    ]
+
+    async def _one_batch(batch: list[str]) -> list[dict]:
+        data = await _chembl_get(session, "molecule", {
+            "pref_name__in": ",".join(batch),
+            "format": "json",
+            "limit": len(batch) + 5,
+        }, sem)
+        return (data or {}).get("molecules", [])
+
+    all_mols: list[dict] = []
+    for mols in await asyncio.gather(*[_one_batch(b) for b in batches]):
+        all_mols.extend(mols)
+
+    name_to_id: dict[str, str] = {}
+    for mol in all_mols:
+        pref = mol.get("pref_name") or ""
+        parent_id = (
+            (mol.get("molecule_hierarchy") or {}).get("parent_chembl_id")
+            or mol.get("molecule_chembl_id")
         )
-        if data and data.get("molecules"):
-            mol = data["molecules"][0]
-            return mol.get("molecule_hierarchy", {}).get("parent_chembl_id") or mol.get("molecule_chembl_id")
+        orig = upper_to_lower.get(pref)
+        if orig and parent_id:
+            name_to_id[orig] = parent_id
 
-        # Fallback: search in molecule synonyms
-        data = await _chembl_get(
-            session,
-            f"{CHEMBL_API_BASE}/molecule",
-            {"molecule_synonyms__synonym__iexact": drug_name, "format": "json", "limit": 1}
-        )
-        if data and data.get("molecules"):
-            mol = data["molecules"][0]
-            return mol.get("molecule_hierarchy", {}).get("parent_chembl_id") or mol.get("molecule_chembl_id")
-
-    return None
+    return name_to_id
 
 
-async def _get_mechanisms(parent_chembl_id: str, session: aiohttp.ClientSession, sem: asyncio.Semaphore) -> list[dict]:
+# ── Batch mechanism lookup ────────────────────────────────────────────────────
+
+async def _batch_mechanisms(
+    parent_ids: list[str],
+    session: aiohttp.ClientSession,
+    sem: asyncio.Semaphore
+) -> dict[str, list[dict]]:
     """
-    Retrieve mechanisms of action for a parent molecule ChEMBL ID.
-    Returns list of mechanism dicts (may be empty).
+    Batch parent_molecule_chembl_id__in lookup.
+    Returns {parent_chembl_id: [mechanism_dict, ...]}.
     """
-    async with sem:
-        data = await _chembl_get(
-            session,
-            f"{CHEMBL_API_BASE}/mechanism",
-            {"parent_molecule_chembl_id": parent_chembl_id, "format": "json", "limit": 50}
-        )
-    if data and data.get("mechanisms"):
-        return data["mechanisms"]
-    return []
+    if not parent_ids:
+        return {}
 
+    batches = [
+        parent_ids[i: i + CHEMBL_MECH_BATCH_SIZE]
+        for i in range(0, len(parent_ids), CHEMBL_MECH_BATCH_SIZE)
+    ]
+
+    async def _one_batch(batch: list[str]) -> list[dict]:
+        data = await _chembl_get(session, "mechanism", {
+            "parent_molecule_chembl_id__in": ",".join(batch),
+            "format": "json",
+            "limit": len(batch) * 6,  # avg ~2-4 mechanisms/drug; 6× is safe
+        }, sem)
+        return (data or {}).get("mechanisms", [])
+
+    id_to_mechs: dict[str, list] = {}
+    for mechs in await asyncio.gather(*[_one_batch(b) for b in batches]):
+        for m in mechs:
+            pid = m.get("parent_molecule_chembl_id")
+            if pid:
+                id_to_mechs.setdefault(pid, []).append(m)
+
+    return id_to_mechs
+
+
+# ── Synonym fallback ──────────────────────────────────────────────────────────
+
+async def _synonym_fallback(
+    missed: list[str],
+    session: aiohttp.ClientSession,
+    sem: asyncio.Semaphore
+) -> dict[str, str]:
+    """
+    Individual synonym search for names that didn't match pref_name.
+    Capped by CHEMBL_SYNONYM_FALLBACK budget to prevent runaway API usage.
+    Returns {name: parent_chembl_id}.
+    """
+    global _synonym_budget_used
+    available = max(0, CHEMBL_SYNONYM_FALLBACK - _synonym_budget_used)
+    to_check = missed[:available]
+    if not to_check:
+        return {}
+
+    _synonym_budget_used += len(to_check)
+
+    async def _one(name: str) -> tuple[str, str | None]:
+        cleaned = _clean_for_chembl(name)
+        data = await _chembl_get(session, "molecule", {
+            "molecule_synonyms__synonym__iexact": cleaned,
+            "format": "json",
+            "limit": 1,
+        }, sem)
+        mols = (data or {}).get("molecules", [])
+        if mols:
+            m = mols[0]
+            pid = (
+                (m.get("molecule_hierarchy") or {}).get("parent_chembl_id")
+                or m.get("molecule_chembl_id")
+            )
+            return name, pid
+        return name, None
+
+    results = await asyncio.gather(*[_one(n) for n in to_check])
+    return {name: pid for name, pid in results if pid}
+
+
+# ── Entry dict builder ────────────────────────────────────────────────────────
 
 def _build_entry(mechanisms: list[dict]) -> dict | None:
-    """
-    Convert a list of ChEMBL mechanism records into a resolved entry dict.
-    Picks the first mechanism with disease_efficacy=1 (approved indication),
-    falling back to the first mechanism overall.
-    """
     if not mechanisms:
         return None
-
-    # Prefer mechanisms that have disease_efficacy flag set
+    # Prefer mechanisms with disease_efficacy flag (approved indications)
     preferred = [m for m in mechanisms if m.get("disease_efficacy") == 1] or mechanisms
-
-    # Deduplicate by mechanism_of_action string
-    seen_moa = set()
-    unique_mechs = []
+    seen: set = set()
+    unique = []
     for m in preferred:
         moa = m.get("mechanism_of_action") or ""
-        if moa and moa not in seen_moa:
-            seen_moa.add(moa)
-            unique_mechs.append(m)
-
-    if not unique_mechs:
+        if moa and moa not in seen:
+            seen.add(moa)
+            unique.append(m)
+    if not unique:
         return None
-
-    primary_moa = unique_mechs[0].get("mechanism_of_action", "")
-    target_ids = [m.get("target_chembl_id") for m in unique_mechs if m.get("target_chembl_id")]
-    all_moas = [m.get("mechanism_of_action", "") for m in unique_mechs if m.get("mechanism_of_action")]
-
+    moas = [m["mechanism_of_action"] for m in unique if m.get("mechanism_of_action")]
+    tids = [m["target_chembl_id"] for m in unique if m.get("target_chembl_id")]
     return {
-        "target_primary": primary_moa,
-        "targets_raw": "|".join(dict.fromkeys(all_moas)),  # deduplicated, insertion-order
-        "target_chembl_ids": "|".join(dict.fromkeys(filter(None, target_ids))),
-        "target_source": "chembl",
-        "target_confidence": "high",
+        "target_primary":       unique[0].get("mechanism_of_action"),
+        "targets_raw":          "|".join(dict.fromkeys(moas)),
+        "target_chembl_ids":    "|".join(dict.fromkeys(filter(None, tids))),
+        "target_source":        "chembl",
+        "target_confidence":    "high",
         "reference_db_version": _DB_VERSION,
     }
 
 
-async def _resolve_single(
-    drug_norm: str,
-    session: aiohttp.ClientSession,
-    sem: asyncio.Semaphore
-) -> dict | None:
-    """
-    Resolve one drug name → ChEMBL target entry.
-    Checks module-level cache first; populates it on miss.
-    """
-    global _chembl_cache
-
-    if drug_norm in _chembl_cache:
-        return _chembl_cache[drug_norm]
-
-    cleaned = _clean_for_chembl(drug_norm)
-    if not cleaned or len(cleaned) < _MIN_NAME_LEN:
-        _chembl_cache[drug_norm] = None
-        return None
-
-    chembl_id = await _get_chembl_id(cleaned, session, sem)
-
-    # If cleaned name failed and it differs from original, try original
-    if not chembl_id and cleaned != drug_norm:
-        chembl_id = await _get_chembl_id(drug_norm, session, sem)
-
-    if not chembl_id:
-        _chembl_cache[drug_norm] = None
-        return None
-
-    mechanisms = await _get_mechanisms(chembl_id, session, sem)
-    entry = _build_entry(mechanisms)
-    _chembl_cache[drug_norm] = entry
-    return entry
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Public API called from main.py
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Public chunk resolver ─────────────────────────────────────────────────────
 
 async def resolve_chunk_async(
     df_chunk: pd.DataFrame,
@@ -212,49 +252,88 @@ async def resolve_chunk_async(
     pair_id_start: int
 ) -> tuple[int, list[dict]]:
     """
-    Resolve all drug names in a chunk against ChEMBL API, then apply
-    results back to the DataFrame via vectorized map. Returns
-    (chunk_index, list_of_row_dicts) suitable for DatasetBuilder.process_chunk().
+    Resolve all drug names in the chunk via batched ChEMBL API calls.
+    Uses the shared _chembl_cache so each unique drug is queried once per run.
     """
-    # 1. Collect unique unresolved drug names
-    drug_col = df_chunk["drug_name_norm"] if "drug_name_norm" in df_chunk.columns else pd.Series(dtype=str)
-    unique_drugs = [d for d in drug_col.dropna().unique() if d not in _chembl_cache and isinstance(d, str)]
+    t0 = time.monotonic()
 
-    # 2. Fan out concurrent ChEMBL lookups for cache misses
-    if unique_drugs:
-        tasks = [_resolve_single(d, session, sem) for d in unique_drugs]
-        await asyncio.gather(*tasks)
-        logging.debug(f"M4 chunk {chunk_index}: resolved {len(unique_drugs)} unique drugs via ChEMBL")
+    drug_col = (
+        df_chunk["drug_name_norm"]
+        if "drug_name_norm" in df_chunk.columns
+        else pd.Series(dtype=str, index=df_chunk.index)
+    )
 
-    # 3. Vectorized assignment from cache
+    # Unique names not yet in cache (also skip very short names)
+    uncached = [
+        d for d in drug_col.dropna().unique()
+        if isinstance(d, str) and len(d) >= _MIN_NAME_LEN and d not in _chembl_cache
+    ]
+
+    if uncached:
+        # ── Step 1: Batch molecule pref_name lookup ──────────────────────────
+        name_to_id = await _batch_molecules(uncached, session, sem)
+
+        # ── Step 2 + 3 in parallel ───────────────────────────────────────────
+        missed = [d for d in uncached if d not in name_to_id]
+        found_ids = list(dict.fromkeys(name_to_id.values()))
+
+        # Mechanism batch and synonym fallback run concurrently
+        mechs_task = asyncio.create_task(_batch_mechanisms(found_ids, session, sem))
+        syn_task   = asyncio.create_task(_synonym_fallback(missed, session, sem))
+        id_to_mechs, syn_name_to_id = await asyncio.gather(mechs_task, syn_task)
+
+        # ── Step 4: Mechanism batch for synonym-resolved IDs (new ones only) ─
+        new_ids = [pid for pid in syn_name_to_id.values() if pid not in id_to_mechs]
+        if new_ids:
+            extra = await _batch_mechanisms(new_ids, session, sem)
+            id_to_mechs.update(extra)
+
+        # ── Step 5: Populate cache ────────────────────────────────────────────
+        all_name_to_id = {**name_to_id, **syn_name_to_id}
+        for name in uncached:
+            cid = all_name_to_id.get(name)
+            _chembl_cache[name] = _build_entry(id_to_mechs.get(cid, [])) if cid else None
+
+        found_pref   = len(name_to_id)
+        found_syn    = len(syn_name_to_id)
+        total_resolved = sum(1 for n in uncached if _chembl_cache.get(n))
+        logging.info(
+            f"  ChEMBL | chunk {chunk_index:>4} | "
+            f"queried {len(uncached):>5} new drugs | "
+            f"pref_name {found_pref} + synonym {found_syn} = {total_resolved} resolved"
+        )
+
+    # ── Vectorized assignment from cache ──────────────────────────────────────
     df = df_chunk.copy()
 
-    def _get_field(drug_norm, field):
-        entry = _chembl_cache.get(drug_norm) if isinstance(drug_norm, str) else None
-        return entry.get(field) if entry else None
+    def _f(d: object, field: str) -> object:
+        e = _chembl_cache.get(d) if isinstance(d, str) else None
+        return e.get(field) if e else None
 
-    df["target_primary"]         = drug_col.map(lambda d: _get_field(d, "target_primary"))
-    df["targets_raw"]            = drug_col.map(lambda d: _get_field(d, "targets_raw"))
-    df["target_source"]          = drug_col.map(lambda d: _get_field(d, "target_source") if _chembl_cache.get(d) else "none")
-    df["target_confidence"]      = drug_col.map(lambda d: _get_field(d, "target_confidence") if _chembl_cache.get(d) else "none")
-    df["target_evidence_text"]   = None  # No free-text evidence; MoA is in target_primary
-    df["target_evidence_source"] = drug_col.map(lambda d: "chembl" if _chembl_cache.get(d) else None)
-    df["reference_db_version"]   = drug_col.map(lambda d: _get_field(d, "reference_db_version"))
+    resolved_mask = drug_col.map(lambda d: bool(_chembl_cache.get(d)) if isinstance(d, str) else False)
 
-    # 4. Assign pair IDs (sequential, vectorized)
-    df["pair_id"] = range(pair_id_start, pair_id_start + len(df))
+    df["target_primary"]         = drug_col.map(lambda d: _f(d, "target_primary"))
+    df["targets_raw"]            = drug_col.map(lambda d: _f(d, "targets_raw"))
+    df["target_source"]          = resolved_mask.map({True: "chembl", False: "none"})
+    df["target_confidence"]      = resolved_mask.map({True: "high",   False: "none"})
+    df["target_evidence_text"]   = None
+    df["target_evidence_source"] = resolved_mask.map({True: "chembl", False: None})
+    df["reference_db_version"]   = drug_col.map(lambda d: _f(d, "reference_db_version"))
+    df["pair_id"]                = range(pair_id_start, pair_id_start + len(df))
 
-    resolved = int(df["target_primary"].notna().sum())
+    n_resolved = int(df["target_primary"].notna().sum())
+    elapsed    = time.monotonic() - t0
     logging.info(
-        f"M4 chunk {chunk_index}: {resolved}/{len(df)} rows resolved "
-        f"({resolved/max(len(df),1)*100:.1f}%)"
+        f"  Chunk {chunk_index:>4} done | "
+        f"{n_resolved}/{len(df)} rows resolved "
+        f"({n_resolved/max(len(df),1)*100:.1f}%) | "
+        f"{elapsed:.1f}s | cache total: {len(_chembl_cache)}"
     )
 
     return chunk_index, df.to_dict("records")
 
 
 def get_cache_stats() -> dict:
-    """Return summary stats on the in-process ChEMBL cache."""
-    total = len(_chembl_cache)
+    total    = len(_chembl_cache)
     resolved = sum(1 for v in _chembl_cache.values() if v is not None)
     return {"cache_total": total, "cache_resolved": resolved, "cache_miss": total - resolved}
