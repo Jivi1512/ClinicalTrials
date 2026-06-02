@@ -91,7 +91,7 @@ async def _batch_molecules(
     """
     Batch pref_name__in lookup for a list of drug names.
     ChEMBL stores pref_names in UPPERCASE; we send uppercase and map back.
-    Returns {original_lowercase_name: parent_chembl_id}.
+    Returns tuple({original_lowercase_name: parent_chembl_id}, {parent_chembl_id: smiles}).
     """
     if not names:
         return {}
@@ -123,6 +123,7 @@ async def _batch_molecules(
         all_mols.extend(mols)
 
     name_to_id: dict[str, str] = {}
+    id_to_smiles: dict[str, str] = {}
     for mol in all_mols:
         pref = mol.get("pref_name") or ""
         parent_id = (
@@ -130,10 +131,13 @@ async def _batch_molecules(
             or mol.get("molecule_chembl_id")
         )
         orig = upper_to_lower.get(pref)
+        smiles = (mol.get("molecule_structures") or {}).get("canonical_smiles")
         if orig and parent_id:
             name_to_id[orig] = parent_id
+            if smiles:
+                id_to_smiles[parent_id] = smiles
 
-    return name_to_id
+    return name_to_id, id_to_smiles
 
 
 # ── Batch mechanism lookup ────────────────────────────────────────────────────
@@ -179,21 +183,21 @@ async def _synonym_fallback(
     missed: list[str],
     session: aiohttp.ClientSession,
     sem: asyncio.Semaphore
-) -> dict[str, str]:
+) -> tuple[dict[str, str], dict[str, str]]:
     """
     Individual synonym search for names that didn't match pref_name.
     Capped by CHEMBL_SYNONYM_FALLBACK budget to prevent runaway API usage.
-    Returns {name: parent_chembl_id}.
+    Returns tuple({name: parent_chembl_id}, {parent_chembl_id: smiles}).
     """
     global _synonym_budget_used
     available = max(0, CHEMBL_SYNONYM_FALLBACK - _synonym_budget_used)
     to_check = missed[:available]
     if not to_check:
-        return {}
+        return {}, {}
 
     _synonym_budget_used += len(to_check)
 
-    async def _one(name: str) -> tuple[str, str | None]:
+    async def _one(name: str) -> tuple[str, str | None, str | None]:
         cleaned = _clean_for_chembl(name)
         data = await _chembl_get(session, "molecule", {
             "molecule_synonyms__synonym__iexact": cleaned,
@@ -207,16 +211,24 @@ async def _synonym_fallback(
                 (m.get("molecule_hierarchy") or {}).get("parent_chembl_id")
                 or m.get("molecule_chembl_id")
             )
-            return name, pid
-        return name, None
+            smiles = (m.get("molecule_structures") or {}).get("canonical_smiles")
+            return name, pid, smiles
+        return name, None, None
 
     results = await asyncio.gather(*[_one(n) for n in to_check])
-    return {name: pid for name, pid in results if pid}
+    syn_name_to_id = {}
+    syn_id_to_smiles = {}
+    for name, pid, smiles in results:
+        if pid:
+            syn_name_to_id[name] = pid
+            if smiles:
+                syn_id_to_smiles[pid] = smiles
+    return syn_name_to_id, syn_id_to_smiles
 
 
 # ── Entry dict builder ────────────────────────────────────────────────────────
 
-def _build_entry(mechanisms: list[dict]) -> dict | None:
+def _build_entry(mechanisms: list[dict], smiles: str | None) -> dict | None:
     if not mechanisms:
         return None
     # Prefer mechanisms with disease_efficacy flag (approved indications)
@@ -239,6 +251,7 @@ def _build_entry(mechanisms: list[dict]) -> dict | None:
         "target_source":        "chembl",
         "target_confidence":    "high",
         "reference_db_version": _DB_VERSION,
+        "drug_smiles":          smiles,
     }
 
 
@@ -271,7 +284,7 @@ async def resolve_chunk_async(
 
     if uncached:
         # ── Step 1: Batch molecule pref_name lookup ──────────────────────────
-        name_to_id = await _batch_molecules(uncached, session, sem)
+        name_to_id, id_to_smiles = await _batch_molecules(uncached, session, sem)
 
         # ── Step 2 + 3 in parallel ───────────────────────────────────────────
         missed = [d for d in uncached if d not in name_to_id]
@@ -280,7 +293,7 @@ async def resolve_chunk_async(
         # Mechanism batch and synonym fallback run concurrently
         mechs_task = asyncio.create_task(_batch_mechanisms(found_ids, session, sem))
         syn_task   = asyncio.create_task(_synonym_fallback(missed, session, sem))
-        id_to_mechs, syn_name_to_id = await asyncio.gather(mechs_task, syn_task)
+        id_to_mechs, (syn_name_to_id, syn_id_to_smiles) = await asyncio.gather(mechs_task, syn_task)
 
         # ── Step 4: Mechanism batch for synonym-resolved IDs (new ones only) ─
         new_ids = [pid for pid in syn_name_to_id.values() if pid not in id_to_mechs]
@@ -290,9 +303,11 @@ async def resolve_chunk_async(
 
         # ── Step 5: Populate cache ────────────────────────────────────────────
         all_name_to_id = {**name_to_id, **syn_name_to_id}
+        all_id_to_smiles = {**id_to_smiles, **syn_id_to_smiles}
         for name in uncached:
             cid = all_name_to_id.get(name)
-            _chembl_cache[name] = _build_entry(id_to_mechs.get(cid, [])) if cid else None
+            smiles = all_id_to_smiles.get(cid) if cid else None
+            _chembl_cache[name] = _build_entry(id_to_mechs.get(cid, []), smiles) if cid else None
 
         found_pref   = len(name_to_id)
         found_syn    = len(syn_name_to_id)
@@ -319,6 +334,7 @@ async def resolve_chunk_async(
     df["target_evidence_text"]   = None
     df["target_evidence_source"] = resolved_mask.map({True: "chembl", False: None})
     df["reference_db_version"]   = drug_col.map(lambda d: _f(d, "reference_db_version"))
+    df["drug_smiles"]            = drug_col.map(lambda d: _f(d, "drug_smiles"))
     df["pair_id"]                = range(pair_id_start, pair_id_start + len(df))
 
     n_resolved = int(df["target_primary"].notna().sum())

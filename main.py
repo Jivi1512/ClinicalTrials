@@ -72,16 +72,11 @@ async def _progress_logger(
         total = chunks_total_ref[0]
         cs    = get_cache_stats()
         logging.info(
-            f"── Progress ── {elapsed/60:.1f} min elapsed | "
+            f"-- Progress -- {elapsed/60:.1f} min elapsed | "
             f"chunks written: {done}/{total if total else '?'} | "
             f"ChEMBL cache: {cs['cache_resolved']}/{cs['cache_total']} resolved "
             f"({cs['cache_miss']} misses)"
         )
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Pipeline
-# ─────────────────────────────────────────────────────────────────────────────
 
 async def run_pipeline():
     start = time.monotonic()
@@ -120,8 +115,12 @@ async def run_pipeline():
 
     async def _resolve_with_gate(df_c, chunk_idx, pair_start):
         """Gated resolve: respects RESOLVE_CONCURRENCY bound."""
-        async with resolve_gate:
-            return await resolve_chunk_async(df_c, chembl_session, chembl_sem, chunk_idx, pair_start)
+        try:
+            async with resolve_gate:
+                return await resolve_chunk_async(df_c, chembl_session, chembl_sem, chunk_idx, pair_start)
+        except Exception as e:
+            logging.error(f"Error resolving chunk {chunk_idx}: {e}")
+            return chunk_idx, df_c.to_dict("records")
 
     def _flush_buffer():
         """Write all consecutively available chunks to CSV."""
@@ -212,6 +211,8 @@ async def run_pipeline():
 
 
 def main():
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     sys.exit(asyncio.run(run_pipeline()))
 
 

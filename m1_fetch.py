@@ -88,84 +88,85 @@ async def fetch_all_pages(page_queue):
     total_pages_estimate = 0  # updated from first response
 
     async with aiohttp.ClientSession() as session:
-        while True:
-            cached_valid=validate_page_cache(page_token)
-            if cached_valid:
-                payload=read_page_cache(page_token)
-                records=payload["response"].get("studies", [])
-                if not should_refetch(page_token, records):
-                    logging.info(f"Using cached page token={page_token}")
-                    await page_queue.put(payload["response"])
-                    next_token=payload["response"].get("nextPageToken")
-                    if not next_token:
+        try:
+            while True:
+                cached_valid=validate_page_cache(page_token)
+                if cached_valid:
+                    payload=read_page_cache(page_token)
+                    records=payload["response"].get("studies", [])
+                    if not should_refetch(page_token, records):
+                        logging.info(f"Using cached page token={page_token}")
+                        await page_queue.put(payload["response"])
+                        next_token=payload["response"].get("nextPageToken")
+                        if not next_token:
+                            break
+                        page_token=next_token
+                        pages_fetched+=1
+                        continue
+
+                response_data, is_stale_token=await _fetch_one_page(session, semaphore, bucket, page_token)
+
+                if is_stale_token:
+                    logging.warning(f"Stale pageToken detected, resetting checkpoint and restarting from page 1")
+                    page_token=None
+                    pages_fetched=0
+                    total_count=0
+                    write_api_checkpoint({
+                        "page_token": None,
+                        "pages_fetched": 0,
+                        "total_count_expected": 0,
+                        "last_updated": datetime.utcnow().isoformat()
+                    })
+                    response_data, is_stale_token=await _fetch_one_page(session, semaphore, bucket, None)
+                    if response_data is None:
+                        logging.error("Failed to fetch first page after checkpoint reset")
                         break
-                    page_token=next_token
-                    pages_fetched+=1
-                    continue
 
-            response_data, is_stale_token=await _fetch_one_page(session, semaphore, bucket, page_token)
-
-            if is_stale_token:
-                logging.warning(f"Stale pageToken detected, resetting checkpoint and restarting from page 1")
-                page_token=None
-                pages_fetched=0
-                total_count=0
-                write_api_checkpoint({
-                    "page_token": None,
-                    "pages_fetched": 0,
-                    "total_count_expected": 0,
-                    "last_updated": datetime.utcnow().isoformat()
-                })
-                response_data, is_stale_token=await _fetch_one_page(session, semaphore, bucket, None)
                 if response_data is None:
-                    logging.error("Failed to fetch first page after checkpoint reset")
+                    logging.error(f"Skipping page token={page_token} after all retries")
                     break
 
-            if response_data is None:
-                logging.error(f"Skipping page token={page_token} after all retries")
-                break
+                if pages_fetched==0:
+                    total_count=response_data.get("totalCount", 0)
+                    total_pages_estimate = max(1, -(-total_count // PAGE_SIZE))  # ceiling div
+                    logging.info(
+                        f"M1: total records={total_count:,} -> ~{total_pages_estimate} pages to fetch"
+                    )
 
-            if pages_fetched==0:
-                total_count=response_data.get("totalCount", 0)
-                total_pages_estimate = max(1, -(-total_count // PAGE_SIZE))  # ceiling div
+                write_page_cache(page_token, response_data)
+                pages_fetched+=1
+
+                next_token=response_data.get("nextPageToken")
+
+                write_api_checkpoint({
+                    "page_token": next_token,
+                    "pages_fetched": pages_fetched,
+                    "total_count_expected": total_count,
+                    "last_updated": datetime.utcnow().isoformat()
+                })
+
+                await page_queue.put(response_data)
+                elapsed = time.monotonic() - fetch_start
+                rate = pages_fetched / elapsed if elapsed > 0 else 0
+                eta_s = (total_pages_estimate - pages_fetched) / rate if rate > 0 and total_pages_estimate > 0 else 0
+                eta_str = f"{eta_s/60:.1f}min" if eta_s >= 60 else f"{eta_s:.0f}s"
+                pct = f"{pages_fetched/max(total_pages_estimate,1)*100:.1f}%" if total_pages_estimate else "?"
                 logging.info(
-                    f"M1: total records={total_count:,} → ~{total_pages_estimate} pages to fetch"
+                    f"M1: page {pages_fetched}/{total_pages_estimate} ({pct}) | "
+                    f"{rate:.2f} pages/s | ETA: {eta_str} | "
+                    f"next_token={'...' + next_token[-12:] if next_token else 'None'}"
                 )
 
-            write_page_cache(page_token, response_data)
-            pages_fetched+=1
+                if not next_token:
+                    break
 
-            next_token=response_data.get("nextPageToken")
+                page_token=next_token
 
-            write_api_checkpoint({
-                "page_token": next_token,
-                "pages_fetched": pages_fetched,
-                "total_count_expected": total_count,
-                "last_updated": datetime.utcnow().isoformat()
-            })
-
-            await page_queue.put(response_data)
-            elapsed = time.monotonic() - fetch_start
-            rate = pages_fetched / elapsed if elapsed > 0 else 0
-            eta_s = (total_pages_estimate - pages_fetched) / rate if rate > 0 and total_pages_estimate > 0 else 0
-            eta_str = f"{eta_s/60:.1f}min" if eta_s >= 60 else f"{eta_s:.0f}s"
-            pct = f"{pages_fetched/max(total_pages_estimate,1)*100:.1f}%" if total_pages_estimate else "?"
-            logging.info(
-                f"M1: page {pages_fetched}/{total_pages_estimate} ({pct}) | "
-                f"{rate:.2f} pages/s | ETA: {eta_str} | "
-                f"next_token={'...' + next_token[-12:] if next_token else 'None'}"
-            )
-
-            if not next_token:
-                break
-
-            page_token=next_token
-
-    expected=total_count
-    fetched_records=pages_fetched*PAGE_SIZE
-    if expected>0 and fetched_records<expected:
-        gap=expected-fetched_records
-        logging.warning(f"COMPLETENESS_WARNING: gap of ~{gap} records (fetched ~{fetched_records}, expected {expected})")
-
-    await page_queue.put(None)
-    logging.info(f"M1 complete: {pages_fetched} pages fetched")
+            expected=total_count
+            fetched_records=pages_fetched*PAGE_SIZE
+            if expected>0 and fetched_records<expected:
+                gap=expected-fetched_records
+                logging.warning(f"COMPLETENESS_WARNING: gap of ~{gap} records (fetched ~{fetched_records}, expected {expected})")
+        finally:
+            await page_queue.put(None)
+            logging.info(f"M1 complete: {pages_fetched} pages fetched")

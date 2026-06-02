@@ -71,7 +71,7 @@ TRIAL_STATUS_ENUM=[
 NULL_THRESHOLDS={
     "nct_id": 0.00,
     "drug_name_norm": 0.02,
-    "condition": 0.01,
+    "conditions": 0.01,
     "phase": 0.15,
     "target_primary": 0.30
 }
@@ -110,5 +110,5 @@ ALL_OUTPUT_COLUMNS=[
     "sponsor_lead","sponsor_collaborators","start_date",
     "completion_date","enrollment_count","enrollment_type",
     "eligibility_criteria","eligibility_parsed",
-    "validation_warnings","is_duplicate"
+    "validation_warnings","is_duplicate","drug_smiles"
 ]

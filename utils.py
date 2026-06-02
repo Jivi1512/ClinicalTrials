@@ -2,6 +2,17 @@ import os
 import json
 import gzip
 import tempfile
+import time
+
+def _safe_replace(src, dst):
+    for i in range(10):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if i == 9:
+                raise
+            time.sleep(0.1)
 
 def atomic_write_json(path, data):
     dir_name=os.path.dirname(os.path.abspath(path))
@@ -10,9 +21,7 @@ def atomic_write_json(path, data):
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
-        if os.path.exists(path):
-            os.remove(path)
-        os.rename(tmp_path, path)
+        _safe_replace(tmp_path, path)
     except Exception:
         try:
             os.unlink(tmp_path)
@@ -37,9 +46,7 @@ def atomic_write_gzip(path, data):
         with os.fdopen(fd, "wb") as raw:
             with gzip.GzipFile(fileobj=raw, mode="wb") as gz:
                 gz.write(json.dumps(data).encode("utf-8"))
-        if os.path.exists(path):
-            os.remove(path)
-        os.rename(tmp_path, path)
+        _safe_replace(tmp_path, path)
     except Exception:
         try:
             os.unlink(tmp_path)
