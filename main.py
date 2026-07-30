@@ -42,15 +42,13 @@ logging.basicConfig(
 logging.getLogger("aiohttp.client").setLevel(logging.ERROR)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Progress helpers
-# ─────────────────────────────────────────────────────────────────────────────
+#Progress helpers
 
 def _eta(elapsed_s: float, done: int, total: int) -> str:
     if done <= 0 or total <= 0:
         return "?"
-    rate = done / elapsed_s
-    remaining = (total - done) / rate
+    rate=done / elapsed_s
+    remaining=(total - done) / rate
     if remaining < 60:
         return f"{remaining:.0f}s"
     return f"{remaining/60:.1f}min"
@@ -67,10 +65,10 @@ async def _progress_logger(
         await asyncio.sleep(30)
         if stop_event.is_set():
             break
-        elapsed = time.monotonic() - start
-        done  = chunks_done_ref[0]
-        total = chunks_total_ref[0]
-        cs    = get_cache_stats()
+        elapsed=time.monotonic() - start
+        done =chunks_done_ref[0]
+        total=chunks_total_ref[0]
+        cs   =get_cache_stats()
         logging.info(
             f"-- Progress -- {elapsed/60:.1f} min elapsed | "
             f"chunks written: {done}/{total if total else '?'} | "
@@ -79,37 +77,37 @@ async def _progress_logger(
         )
 
 async def run_pipeline():
-    start = time.monotonic()
-    pipeline_run_id = str(uuid.uuid4())
+    start=time.monotonic()
+    pipeline_run_id=str(uuid.uuid4())
     logging.info(f"Pipeline started | run_id={pipeline_run_id}")
 
     # Clear stale outputs on a fresh run
-    checkpoint = read_api_checkpoint()
-    if checkpoint.get("pages_fetched", 0) == 0:
+    checkpoint=read_api_checkpoint()
+    if checkpoint.get("pages_fetched", 0)==0:
         for path in [OUTPUT_CSV_PATH, REVIEW_QUEUE_PATH, DUPLICATES_LOG_PATH]:
             if os.path.exists(path):
                 os.remove(path)
                 logging.info(f"Cleared stale output: {path}")
 
     # Shared state for progress logging
-    chunks_done_ref  = [0]
-    chunks_total_ref = [0]
-    stop_progress    = asyncio.Event()
+    chunks_done_ref =[0]
+    chunks_total_ref=[0]
+    stop_progress   =asyncio.Event()
 
-    builder       = DatasetBuilder(pipeline_run_id)
-    page_queue    = asyncio.Queue(maxsize=QUEUE_MAX_PAGES)
-    chembl_sem    = asyncio.Semaphore(CHEMBL_SEMAPHORE)
-    resolve_gate  = asyncio.Semaphore(RESOLVE_CONCURRENCY)
+    builder      =DatasetBuilder(pipeline_run_id)
+    page_queue   =asyncio.Queue(maxsize=QUEUE_MAX_PAGES)
+    chembl_sem   =asyncio.Semaphore(CHEMBL_SEMAPHORE)
+    resolve_gate =asyncio.Semaphore(RESOLVE_CONCURRENCY)
 
-    # Results buffer for ordered writing: {chunk_index → records}
-    results_buf: dict[int, list] = {}
-    next_write   = 0               # next chunk_index to write to CSV
-    tasks_launched = 0
+    # Results buffer for ordered writing: {chunk_index to records}
+    results_buf: dict[int, list]={}
+    next_write  =0               # next chunk_index to write to CSV
+    tasks_launched=0
 
-    connector = aiohttp.TCPConnector(limit=CHEMBL_SEMAPHORE + 10, ttl_dns_cache=300)
+    connector=aiohttp.TCPConnector(limit=CHEMBL_SEMAPHORE + 10, ttl_dns_cache=300)
 
-    fetch_task       = asyncio.create_task(fetch_all_pages(page_queue))
-    progress_task    = asyncio.create_task(
+    fetch_task      =asyncio.create_task(fetch_all_pages(page_queue))
+    progress_task   =asyncio.create_task(
         _progress_logger(start, chunks_done_ref, chunks_total_ref, stop_progress)
     )
 
@@ -136,25 +134,25 @@ async def run_pipeline():
             next_write += 1
 
     async with aiohttp.ClientSession(connector=connector) as chembl_session:
-        resolve_tasks: list[asyncio.Task] = []
+        resolve_tasks: list[asyncio.Task]=[]
 
-        # ── Parse loop: launch a resolve task for every chunk ────────────────
+        # Parse loop: launch a resolve task for every chunk
         async for df_chunk, chunk_index in parse_pages(page_queue):
-            df_chunk = normalize_chunk(df_chunk)
-            pair_id_start = allocate_pair_range(len(df_chunk))
+            df_chunk=normalize_chunk(df_chunk)
+            pair_id_start=allocate_pair_range(len(df_chunk))
 
-            task = asyncio.create_task(
+            task=asyncio.create_task(
                 _resolve_with_gate(df_chunk, chunk_index, pair_id_start)
             )
             resolve_tasks.append(task)
             tasks_launched += 1
-            chunks_total_ref[0] = tasks_launched
+            chunks_total_ref[0]=tasks_launched
 
-            # Opportunistically flush any completed chunks (non-blocking)
-            done_tasks = [t for t in resolve_tasks if t.done()]
+            # Flush any completed chunks (non-blocking)
+            done_tasks=[t for t in resolve_tasks if t.done()]
             for t in done_tasks:
-                ci, records = t.result()
-                results_buf[ci] = records
+                ci, records=t.result()
+                results_buf[ci]=records
                 resolve_tasks.remove(t)
             _flush_buffer()
 
@@ -163,14 +161,14 @@ async def run_pipeline():
             f"{len(resolve_tasks)} resolve tasks still in flight"
         )
 
-        # ── Drain remaining resolve tasks ─────────────────────────────────────
+        # Drain remaining resolve tasks
         if resolve_tasks:
             for coro in asyncio.as_completed(resolve_tasks):
-                ci, records = await coro
-                results_buf[ci] = records
+                ci, records=await coro
+                results_buf[ci]=records
                 _flush_buffer()
-                elapsed = time.monotonic() - start
-                remaining = len([k for k in results_buf if k >= next_write])
+                elapsed=time.monotonic() - start
+                remaining=len([k for k in results_buf if k >= next_write])
                 logging.info(
                     f"  Resolve drain | chunk {ci} done | "
                     f"{chunks_done_ref[0]}/{tasks_launched} written | "
@@ -191,9 +189,9 @@ async def run_pipeline():
     except asyncio.CancelledError:
         pass
 
-    stats      = builder.get_stats()
-    cache_stats = get_cache_stats()
-    runtime    = time.monotonic() - start
+    stats     =builder.get_stats()
+    cache_stats=get_cache_stats()
+    runtime   =time.monotonic() - start
 
     logging.info(
         f"Pipeline complete | {runtime/60:.1f} min | "
@@ -201,20 +199,20 @@ async def run_pipeline():
         f"ChEMBL cache: {cache_stats['cache_resolved']}/{cache_stats['cache_total']} resolved"
     )
 
-    checkpoint   = read_api_checkpoint()
-    pages_fetched = checkpoint.get("pages_fetched", 0)
-    total_count   = checkpoint.get("total_count_expected", 0)
+    checkpoint  =read_api_checkpoint()
+    pages_fetched=checkpoint.get("pages_fetched", 0)
+    total_count  =checkpoint.get("total_count_expected", 0)
 
-    exit_code = generate_report(stats, pages_fetched, total_count, pipeline_run_id, runtime)
+    exit_code=generate_report(stats, pages_fetched, total_count, pipeline_run_id, runtime)
     logging.info(f"Exit code: {exit_code}")
     return exit_code
 
 
 def main():
-    if sys.platform == 'win32':
+    if sys.platform=='win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     sys.exit(asyncio.run(run_pipeline()))
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()

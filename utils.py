@@ -10,7 +10,7 @@ def _safe_replace(src, dst):
             os.replace(src, dst)
             return
         except PermissionError:
-            if i == 9:
+            if i==9:
                 raise
             time.sleep(0.1)
 

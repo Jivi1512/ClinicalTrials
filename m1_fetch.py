@@ -10,8 +10,7 @@ from config import (
     API_BASE_URL, PAGE_SIZE,
     SEMAPHORE_LIMIT, TOKEN_BUCKET_RATE, TOKEN_BUCKET_INIT,
     RETRY_MAX, RETRY_BACKOFF_BASE, REQUEST_TIMEOUT,
-    FILTER_ADVANCED, API_FIELDS_PARAM
-)
+    FILTER_ADVANCED, API_FIELDS_PARAM)
 
 class TokenBucket:
     def __init__(self, rate, init_fill):
@@ -115,8 +114,7 @@ async def fetch_all_pages(page_queue):
                         "page_token": None,
                         "pages_fetched": 0,
                         "total_count_expected": 0,
-                        "last_updated": datetime.utcnow().isoformat()
-                    })
+                        "last_updated": datetime.utcnow().isoformat()})
                     response_data, is_stale_token=await _fetch_one_page(session, semaphore, bucket, None)
                     if response_data is None:
                         logging.error("Failed to fetch first page after checkpoint reset")
@@ -130,8 +128,7 @@ async def fetch_all_pages(page_queue):
                     total_count=response_data.get("totalCount", 0)
                     total_pages_estimate = max(1, -(-total_count // PAGE_SIZE))  # ceiling div
                     logging.info(
-                        f"M1: total records={total_count:,} -> ~{total_pages_estimate} pages to fetch"
-                    )
+                        f"M1: total records={total_count:,} -> ~{total_pages_estimate} pages to fetch")
 
                 write_page_cache(page_token, response_data)
                 pages_fetched+=1
@@ -142,8 +139,7 @@ async def fetch_all_pages(page_queue):
                     "page_token": next_token,
                     "pages_fetched": pages_fetched,
                     "total_count_expected": total_count,
-                    "last_updated": datetime.utcnow().isoformat()
-                })
+                    "last_updated": datetime.utcnow().isoformat()})
 
                 await page_queue.put(response_data)
                 elapsed = time.monotonic() - fetch_start
@@ -154,8 +150,7 @@ async def fetch_all_pages(page_queue):
                 logging.info(
                     f"M1: page {pages_fetched}/{total_pages_estimate} ({pct}) | "
                     f"{rate:.2f} pages/s | ETA: {eta_str} | "
-                    f"next_token={'...' + next_token[-12:] if next_token else 'None'}"
-                )
+                    f"next_token={'...' + next_token[-12:] if next_token else 'None'}")
 
                 if not next_token:
                     break

@@ -92,8 +92,7 @@ def _parse_study(study):
         "enrollment_count": enrollment_count,
         "enrollment_type": enrollment_type,
         "eligibility_criteria": eligibility,
-        "eligibility_parsed": False
-    }
+        "eligibility_parsed": False}
 
     interventions=arms_mod.get("interventions", [])
     rows=[]

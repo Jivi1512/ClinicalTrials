@@ -115,8 +115,7 @@ def generate_report(stats, pages_fetched, total_count_expected, pipeline_run_id,
         "spot_check_pass_rate": round(spot_pass_rate, 4),
         "spot_check_failures": spot_failures,
         "validation_warnings_count": stats.get("validation_warnings_count", 0),
-        "runtime_seconds": round(runtime_seconds, 2)
-    }
+        "runtime_seconds": round(runtime_seconds, 2)}
 
     with open(RUN_REPORT_PATH, "w") as f:
         json.dump(report, f, indent=2)
